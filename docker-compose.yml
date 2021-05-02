@@ -1,0 +1,56 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: ${USERNAME} 
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    container_name: ${APP_CONTAINER}
+    restart: ${RESTART}
+    working_dir: /var/www/
+    volumes:
+      - ./${APP_DIR}:/var/www
+    networks:
+      - klemp 
+
+  db:
+    image: yobasystems/alpine-mariadb
+    container_name: ${DB_CONTAINER} 
+    restart: ${RESTART}
+    ports:
+      - ${DB_PORT}:3306
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+    volumes:
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - klemp 
+
+  adminer:
+    image: adminer
+    container_name: ${ADMINER_CONTAINER} 
+    restart: ${RESTART} 
+    ports:
+      - ${ADMINER_PORT}:8080
+    networks:
+      - klemp
+
+  nginx:
+    image: nginx:1.19-alpine
+    container_name: ${NGINX_CONTAINER} 
+    restart: ${RESTART} 
+    ports:
+      - ${NGINX_PORT}:80
+    volumes:
+      - ./${APP_DIR}:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d
+    networks:
+      - klemp 
+networks:
+  klemp:
+    driver: bridge
